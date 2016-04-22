@@ -3,17 +3,10 @@ from cmd import Cmd
 from server import Node
 import random, string, os, time, sys
 from multiprocessing import Process
+from util import GenPassword
 
 SECRET_LENGTH = 10
 HEAD_START = 1 # unit: second
-
-def GenPassword(length):
-    lett_candidates = string.uppercase + string.lowercase + string.punctuation
-    lett_index = range(0, len(lett_candidates))
-    random.shuffle(lett_index)
-    MIN_LENGTH = 6
-    length =  length if length > MIN_LENGTH else MIN_LENGTH
-    return ''.join([lett_candidates[i] for i in lett_index[:length]])
 
 class Client(Cmd):
     '''

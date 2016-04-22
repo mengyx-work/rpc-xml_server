@@ -1,10 +1,11 @@
 from SimpleXMLRPCServer import SimpleXMLRPCServer
+from multiprocessing import Process
 from xmlrpclib import ServerProxy
 from os.path import isfile, join
 from os import listdir
-import sys
-
+import sys, yaml, util
 from urlparse import urlparse
+
 '''
  to start the client by:
  python client.py urls.txt directory http://servername.com:4242
@@ -25,8 +26,8 @@ def getPort(url):
         return parsed_url.port
     raise ValueError('failed to find port in URL' + str(url))
 
-
 class Node(object):
+
     OK = 0
     FAIL = 1
     MAX_HISTORY_LENGTH = 6
@@ -48,8 +49,12 @@ class Node(object):
         #server = SimpleXMLRPCServer((self.URL, getPort(self.URL)))
         server = SimpleXMLRPCServer(("", getPort(self.URL)))
 
-        # server.register_function(self.fetch)
-        server.register_instance(self) # register an object instread of function
+        server.register_function(self.fetch)
+        '''
+        register an instance intead of specific function, 
+        will expose all the functions to the remote RPC calls
+        '''
+        # server.register_instance(self) 
         server.serve_forever()
 
 
@@ -84,7 +89,7 @@ class Node(object):
         if code == self.OK: return code, data
         history = history + [self.URL]
         # constrain on the history length
-        if len(history) > MAX_HISTORY_LENGTH:
+        if len(history) > self.MAX_HISTORY_LENGTH:
             return self.FAIL, self.EMPTY
         return self._broadcast(query, history)
 
@@ -114,8 +119,15 @@ class Node(object):
         return self.OK
 
 def main():
-    url, dirname, secret = sys.argv[1:]
-    node = Node(url, dirname, secret)
-    node._start_server()
-
+    '''
+    use multiprocessing to create a separate process
+    for this server daemon
+    '''
+    server_data = util.GetYamlData('rpc-xml_server')
+    url, dirname  = sys.argv[1:]
+    n = Node(url, dirname, server_data['server_password'])
+    p = Process(target = n._start_server, name = 'rpc-xml_server_%s' % server_data['server_name'])
+    p.daemon = True
+    p.start()
+ 
 if __name__ == '__main__': main()
