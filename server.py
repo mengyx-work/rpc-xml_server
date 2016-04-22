@@ -26,17 +26,15 @@ def getPort(url):
     raise ValueError('failed to find port in URL' + str(url))
 
 
-
-
 class Node(object):
-    OK = 1
-    FAIL = 2
+    OK = 0
+    FAIL = 1
     MAX_HISTORY_LENGTH = 6
     EMPTY = ''
 
     SimpleXMLRPCServer.allow_reuse_address = 1
     
-    def __init__(self, secret = None, URL = None, dirname = './'):
+    def __init__(self, URL = None, dirname = './', secret = None):
         self.secret = secret
         self.URL = URL
         self.dirname = dirname
@@ -51,16 +49,16 @@ class Node(object):
         server = SimpleXMLRPCServer(("", getPort(self.URL)))
 
         # server.register_function(self.fetch)
-        server.resgiser_instance(self) # register an object instread of function
-        server.start_forever()
+        server.register_instance(self) # register an object instread of function
+        server.serve_forever()
 
 
     def _handle(self, query):
         filename = join(self.dirname, query)
         ## list all the files
         #all_files = [f for f in listdir(self.dirname) if isfile(join(self.dirname, f))]
-        if isfile(filename): return OK, open(filename).read()
-        return FAIL, EMPTY
+        if isfile(filename): return self.OK, open(filename).read()
+        return self.FAIL, self.EMPTY
 
     def _broadcast(self, query, history):
         for URL in self.known.copy(): ## to delete URL without any response, so a copy is needed
@@ -69,11 +67,11 @@ class Node(object):
                 s = ServerProxy(URL)
                 ## security issue with register_instance, all the method exposed to the RPC calls
                 code, data = s.query(query, history)
-                if code == OK: return code, data
+                if code == self.OK: return code, data
             except:
                 self.known.remove(URL)
 
-        return FAIL, EMPTY
+        return self.FAIL, self.EMPTY
 
     def query(self, query, history = []):
         '''
@@ -82,11 +80,12 @@ class Node(object):
         2. use _broadcast to pass query to neighbors in self.knowns
         '''
         code, data = self._handle(query)
-        if code == OK: return code, data
+        print 'code from _handle', code
+        if code == self.OK: return code, data
         history = history + [self.URL]
         # constrain on the history length
         if len(history) > MAX_HISTORY_LENGTH:
-            return FAIL, EMPTY
+            return self.FAIL, self.EMPTY
         return self._broadcast(query, history)
 
 
@@ -95,22 +94,24 @@ class Node(object):
         function to fetch query file either locally or the known URLs.
         the secret is required
         '''
-        if secret != self.secret:   return FAIL, EMPTY
+        if secret != self.secret: return 1
         code, data = self.query(query)
-        if code == OK:
-            f = open(join(self.dirname, query), 'w')
+        print 'the code and data: ', code, data
+        if code == self.OK:
+            #f = open(join(self.dirname, query), 'w')
+            f = open('./tmp.txt', 'w')
             f.write(data)
             f.close()
-            return OK
+            return data
         else:
-            return FAIL
+            return self.FAIL
 
     def hello(self, other_URL):
         '''
         function to build connection from other URL
         '''
         self.known.add(other_URL)
-        return OK
+        return self.OK
 
 def main():
     url, dirname, secret = sys.argv[1:]

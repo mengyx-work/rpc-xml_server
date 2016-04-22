@@ -27,7 +27,7 @@ class Client(Cmd):
         Cmd.__init__(self)
         self.secret = GenPassword(SECRET_LENGTH)
         n = Node(url, dirname, self.secret)
-        p = Process(target = n._start_server(), name = 'rpc-xml_server')
+        p = Process(target = n._start_server, name = 'rpc-xml_server')
         p.daemon = True
         p.start()
         time.sleep(HEAD_START)
@@ -35,10 +35,13 @@ class Client(Cmd):
         self.server = ServerProxy(url)
 
     def do_fetch(self, arg):
+        print 'the fetch result: ', self.server.fetch(arg, self.secret)
+        '''
         try:
             self.server.fetch(arg, self.secret)
         except:
             print 'failed to fetch ' + arg
+        '''
     
     def do_exit(self, arg):
         sys.exit()
