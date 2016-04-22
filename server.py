@@ -129,5 +129,6 @@ def main():
     p = Process(target = n._start_server, name = 'rpc-xml_server_%s' % server_data['server_name'])
     p.daemon = True
     p.start()
- 
+    p.join() ## make the main as daemon 
+
 if __name__ == '__main__': main()

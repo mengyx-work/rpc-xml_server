@@ -20,7 +20,7 @@ def GenYamlData(pass_length = 16):
 
 def GetYamlData(dict_key):
     with open(YML_FILE_PATH, 'r') as stream:
-        yml_content = ymal.load(stream)   
+        yml_content = yaml.load(stream)   
     if dict_key in yml_content.keys():
         return yml_content[dict_key]
     else:
