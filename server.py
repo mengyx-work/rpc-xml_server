@@ -105,7 +105,7 @@ class Node(object):
         if url in self.known:
             return self.FAIL, 'already in the known URLs.'
         else:
-            self.known.append(url)
+            self.known.update(url)
             return self.OK, self.URL
 
     def fetch(self, query, secret, history = None):
@@ -127,7 +127,7 @@ class Node(object):
             return self.OK, data
         else:
             #return self.FAIL
-            return self.FAIL, 'failed to fetch ' + query
+            return self.FAIL, 'failed to fetch %s' % query
 
     def exchange_url(self, other_UR):
         '''
