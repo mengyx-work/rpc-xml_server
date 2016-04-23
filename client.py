@@ -32,7 +32,7 @@ class Client(object):
             self.server = ServerProxy(self.url)
 
     def getURL(self):
-        if hasattr(self, url):  return self.url
+        if hasattr(self, 'url'):  return self.url
         return None
 
     def setURL(self, url):
@@ -41,30 +41,30 @@ class Client(object):
         print 'current server URL is updated to %s' % self.url
 
     def fetch_from_server(self, query):
-        if not hasattr(self, server):
-            print 'server is not connected yet.'
+        if not hasattr(self, 'server'):
+            print 'server is not connected yet. \n'
             return self.FAIL
         try:
             code, data = self.server.fetch(query, self.secret)
-            if code = self.OK:
+            if code == self.OK:
                 return data
             else:
-                print 'failed to use fetch call' 
+                sys.stderr.write('failed to use fetch %s \n' % query)
         except:
-            print 'failed to fetch ' + query
+            print 'failed to call fetch! \n'
 
     def add_new_url(self, new_url):
-        if not hasattr(self, server):
-            print 'server is not connected yet.'
+        if not hasattr(self, 'server'):
+            print 'server is not connected yet. \n'
             return self.FAIL
         try:
             code, data = self.server.add_known_url(new_url, self.secret)
             if code == self.OK:
                 return data
             else:
-                print 'failed to use add_known_url call'
+                print 'failed to add URL %s' % new_url
         except:
-            print 'failed to add new URL'
+            print 'failed to call add_known_url'
  
  
 
@@ -74,9 +74,9 @@ class Cmd_Client(Client, Cmd):
 
     def __init__(self, dict_key):
         Cmd.__init__(self)
-        Client.__init__(dict_key)
+        Client.__init__(self, dict_key)
 
-     def do_show_url(self, arg):
+    def do_show_url(self, arg):
         print 'the current URL: ', self.getURL()
 
     def do_set_url(self, url):
@@ -84,9 +84,11 @@ class Cmd_Client(Client, Cmd):
         self.setURL(url)
 
     def do_fetch(self, arg):
-        self.fetch_from_server(arg)
+        fetched_content = self.fetch_from_server(arg)
+        if fetched_content is not None:
+            print 'the content:\n  %s \n is fetched' % fetched_content
 
-    def add_new_url(self, arg):
+    def do_add_new_url(self, arg):
         self.add_new_url(arg)
    
     def do_exit(self, arg):
@@ -94,7 +96,8 @@ class Cmd_Client(Client, Cmd):
 
 
 def main():
-    dict_key = sys.argv[1]
+    #dict_key = sys.argv[1]
+    dict_key = 'rpc-xml_server'
     print 'the dict_key: ', dict_key
     client = Cmd_Client(dict_key)
     client.cmdloop()
